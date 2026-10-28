@@ -46,10 +46,10 @@ The original Vanilla client is the primary and simplest play path. You do **not*
 
 ## Get the Project
 
-Replace `<REPOSITORY_URL>` with the repository URL supplied by your maintainer (this is a placeholder, not a published address):
+Clone the public repository:
 
 ```bash
-git clone <REPOSITORY_URL> cmangos-vanilla
+git clone https://github.com/blackopsrepl/cmangos-vanilla.git
 cd cmangos-vanilla
 ```
 
