@@ -43,7 +43,7 @@ After database compatibility is confirmed, stop and start the world using the co
 
 ## Conservative Defaults
 
-The generated `aiplayerbot.conf` starts smaller than upstream defaults:
+The generated `aiplayerbot.conf` starts smaller than upstream defaults. Startup logins are limited to one bot per update interval to keep the small-world population target from being overshot by login batches.
 
 | Setting | Default |
 | --- | --- |
