@@ -34,6 +34,10 @@ export AHBOT_MAX_REQUIRED_LEVEL="${AHBOT_MAX_REQUIRED_LEVEL:-60}"
 
 render_configs() {
   mkdir -p /opt/cmangos/etc /opt/cmangos/logs "$DATA_DIR" /opt/etc
+  if [ "$AHBOT_ENABLED" != "1" ]; then
+    export AHBOT_SELL_CHANCE=0
+    export AHBOT_BUY_CHANCE=0
+  fi
   envsubst < /opt/cmangos/templates/mangosd.conf.template > /opt/cmangos/etc/mangosd.conf
   envsubst < /opt/cmangos/templates/realmd.conf.template > /opt/cmangos/etc/realmd.conf
   envsubst < /opt/cmangos/templates/aiplayerbot.conf.template > /opt/cmangos/etc/aiplayerbot.conf
