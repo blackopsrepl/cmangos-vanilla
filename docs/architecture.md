@@ -20,9 +20,11 @@ flowchart LR
 | `db-init` | One-shot Classic-DB import service. |
 | `tools` | One-shot extractor/runtime utility service. |
 | `realmd` | Legacy authentication server. |
-| `mangosd` | Legacy world server. PlayerBots and AHBot configs are added only when explicitly enabled. |
+| `mangosd` | Legacy world server with PlayerBots companions/world population and AHBot auctions enabled by default. |
 
 The same base compose services are used by Windows Docker Desktop and Linux Podman. Windows helpers live in `scripts/*.ps1`; Linux helpers live in `scripts/linux/*.sh` and add `docker-compose.linux.yml` for Linux bind mounts.
+
+PlayerBots and AHBot normally build with `BUILD_PLAYERBOTS=ON` and `BUILD_AHBOT=ON` and run with `PLAYERBOTS_ENABLED=1` and `AHBOT_ENABLED=1`. Fresh database initialization imports their database support; first world startup initializes bot accounts and characters and takes longer. Existing databases need a separately verified migration before enabling previously absent bot support; see [PlayerBots](playerbots.md#existing-installations). HermesProxy is a separate optional advanced route, not required for bots or direct Vanilla play.
 
 ## Local State
 

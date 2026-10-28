@@ -6,7 +6,7 @@
 
 Bring a classic Vanilla world onto your own computers and explore it together at home.
 
-This project turns CMaNGOS Classic into a repeatable household setup: run the world on one Windows PC, or keep it on a Linux machine and connect from Windows PCs across your trusted home network. It provides guided setup scripts, separate player accounts, persistent characters, and optional bots for evenings when only a few people are playing.
+This project turns CMaNGOS Classic into a repeatable household setup: run the world on one Windows PC, or keep it on a Linux machine and connect from Windows PCs across your trusted home network. It provides guided setup scripts, separate player accounts, persistent characters, PlayerBots companions and a populated world, and active auction houses through AHBot—all enabled by default.
 
 | At a glance | This project |
 | --- | --- |
@@ -29,10 +29,10 @@ This project turns CMaNGOS Classic into a repeatable household setup: run the wo
 - One login per family member, with characters and progress kept locally.
 - A Windows/Docker path for playing on one computer.
 - A Linux/Podman path for a small home machine serving Windows PCs on the same LAN.
-- Optional PlayerBots and AHBot to make a small household world feel more alive.
+- PlayerBots companions and random world bots, plus AHBot for active auctions, enabled by default.
 - An advanced HermesProxy route for one exact archived Classic Era client build.
 
-The plain CMaNGOS experience comes first. PlayerBots, AHBot, and HermesProxy stay off until the original Vanilla path is working.
+PlayerBots and AHBot are part of the default world. HermesProxy is a separate, optional advanced client route; the original Vanilla client connects directly.
 
 ## Choose Your Setup
 
@@ -88,7 +88,9 @@ From PowerShell in the repository root:
 
 Prepare the source parent directory as described in [source inputs](docs/source-inputs.md) before importing. Build scripts preflight the local source contract. Existing installations keep their local sources and runtime state; do not reimport over an existing `server/`.
 
-The first build and data extraction take the longest. Extracted data, passwords, databases, and logs stay in ignored local storage.
+The first build and data extraction take the longest. First world startup also initializes bot accounts and characters, so allow extra time and follow the `mangosd` logs. Defaults target 20–30 random bots across levels 1–60 using 20 bot accounts. Extracted data, passwords, databases, and logs stay in ignored local storage.
+
+Existing `.env` values are retained, not replaced by new defaults. For an existing installation, see [enabling bots and the database migration caveat](docs/playerbots.md#existing-installations) before rebuilding or starting with bots enabled.
 
 ### 2. Give everyone a login
 
@@ -160,10 +162,10 @@ After the basic path works, edit the ignored `.env` file and restart the world.
 | Rename the realm | `REALM_NAME` |
 | Change leveling speed | `RATE_XP_KILL`, `RATE_XP_QUEST`, `RATE_XP_EXPLORE` |
 | Change drops and money | `RATE_DROP_ITEMS`, `RATE_DROP_MONEY` |
-| Fill out a quiet world | [PlayerBots and AHBot](docs/playerbots.md) |
+| Tune companions, world population, and auctions | [PlayerBots and AHBot](docs/playerbots.md) |
 | Use the archived modern client | [HermesProxy](docs/hermesproxy.md) |
 
-Defaults keep the original rates, enable ScriptDev content, and leave PlayerBots and AHBot disabled.
+Defaults keep the original rates and enable ScriptDev content, PlayerBots, and AHBot. To explicitly turn off bots, set `PLAYERBOTS_ENABLED=0` and `AHBOT_ENABLED=0` in `.env`, then stop and start the world with the everyday commands above. Normally leave `BUILD_PLAYERBOTS=ON` and `BUILD_AHBOT=ON`; disabling runtime bots does not require rebuilding the image.
 
 ## What Is Tracked—and What Stays Home
 

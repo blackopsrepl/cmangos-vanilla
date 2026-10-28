@@ -2,12 +2,14 @@
 
 This path keeps the CMaNGOS world on a Linux machine at home while family members play from Windows PCs on the same trusted LAN. The Windows PowerShell/Docker workflow remains available and uses the same compose file.
 
+PlayerBots companions and a populated world, plus active AHBot auctions, are enabled by default. HermesProxy is a separate optional advanced client route.
+
 This is a home-network setup. Keep the documented ports behind your router and host firewall; do not port-forward them to the internet.
 
 ## Prerequisites
 
 - Podman 5.x and either `podman compose` or `podman-compose`.
-- Git and network access for the first HermesProxy publish (separate from manual server-source import).
+- For the optional HermesProxy route only: Git and network access for the first publish (separate from manual server-source import).
 - A manually prepared parent containing `mangos-classic`, `classic-db`, and `playerbots`, with markers matching `versions.lock`; see [source inputs](source-inputs.md).
 - An original Vanilla 1.12.x MPQ-layout client available to the Linux host, or an archive exported from the Windows repo after extraction.
 - Firewall access from the Windows laptop to the Linux host on `3724` and `8085`; add `1119`, `8084`, and `8086` when using HermesProxy.
@@ -31,6 +33,12 @@ After `bootstrap.sh` creates `.env`, replace the example values for `DB_ROOT_PAS
 
 Source import never downloads and refuses overwrite; build preflights the imported local trees. Existing installations keep their sources and state; use `./scripts/linux/import-server-sources.sh --check` rather than reimporting. Keep built images local.
 
+First world startup initializes bot accounts and characters and takes longer; follow `./scripts/linux/logs.sh --follow` while it works. Defaults target 20–30 random bots, levels 1–60, using 20 bot accounts.
+
+Existing `.env` values are retained. For existing configurations, set `BUILD_PLAYERBOTS=ON`, `BUILD_AHBOT=ON`, `PLAYERBOTS_ENABLED=1`, and `AHBOT_ENABLED=1`, then rebuild with `./scripts/linux/build.sh`. Back up existing databases and resolve missing bot database support before restarting with bots enabled; see [the migration caveat](playerbots.md#existing-installations). Forced initialization is not an upgrade: it drops all CMaNGOS databases, including accounts and characters.
+
+To explicitly disable runtime bots, set `PLAYERBOTS_ENABLED=0` and `AHBOT_ENABLED=0` in `.env`, then run `./scripts/linux/down.sh` and `./scripts/linux/up.sh`. Normally keep both build flags `ON`; no image rebuild is needed for this runtime change.
+
 Create the archive on the Windows machine after running `.\scripts\extract-data.ps1`:
 
 ```powershell
@@ -51,7 +59,7 @@ If the original 1.12.x client is mounted directly on Linux, skip the archive and
 ./scripts/linux/set-realm-address.sh --mode lan --address 192.168.1.50
 ```
 
-## Modern Client Through HermesProxy
+## Optional Advanced Modern Client Through HermesProxy
 
 HermesProxy is published as a Linux self-contained binary into `data/hermesproxy-linux/`. The helper uses a .NET SDK container, so a host .NET SDK is not required.
 

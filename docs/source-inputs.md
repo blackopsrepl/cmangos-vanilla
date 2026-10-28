@@ -4,7 +4,7 @@ The public repository is orchestration-only. It does not ship server source, SQL
 
 ## Contract and Manual Acquisition
 
-Manually prepare a directory containing all three trees, even when PlayerBots is disabled:
+Manually prepare a directory containing all three trees. PlayerBots and AHBot are enabled by default; all three inputs are still required if you explicitly disable bots:
 
 ```text
 cmangos-inputs/
@@ -70,11 +70,13 @@ Windows PowerShell:
 .\scripts\build.ps1
 ```
 
-The import helpers validate and copy inputs into local `server/`, refuse overwrite, and never download. Check mode validates the installed local trees without importing. Continue with database initialization and client-data extraction/import in the [README](../README.md) or [Linux guide](linux-podman.md). Change example passwords before initializing databases.
+The import helpers validate and copy inputs into local `server/`, refuse overwrite, and never download. Check mode validates the installed local trees without importing. Continue with database initialization and client-data extraction/import in the [README](../README.md) or [Linux guide](linux-podman.md). Change example passwords before initializing databases. Fresh setup uses the same import/build/init/extract flow with bot support enabled; first world startup initializes bot accounts and characters and takes longer.
 
 ## Existing Installations and Local Fork Changes
 
 Do not reimport over an existing `server/`. Use check mode to validate it; leave the existing sources, databases, extracted data, and runtime state in place. If validation fails, investigate missing files or lineage mismatches rather than discarding local changes or rewriting markers blindly.
+
+Bootstrap retains existing `.env` values. To adopt the bot-enabled defaults, set `BUILD_PLAYERBOTS=ON`, `BUILD_AHBOT=ON`, `PLAYERBOTS_ENABLED=1`, and `AHBOT_ENABLED=1`, then rebuild the image as described in [PlayerBots](playerbots.md#existing-installations). Back up existing databases first: rebuilding an image does not install missing bot tables, and an existing database requires a verified targeted migration. Do not use forced database initialization as an upgrade; it drops and recreates the CMaNGOS databases, including all accounts and characters.
 
 Keep a separate backup or private source checkout for compatible fork changes. A clean checkout of a pinned upstream base is not necessarily equivalent to your working local fork: markers intentionally do not encode patches or full tree contents. Import the complete compatible trees, preserve their notices, and record local modifications separately. Any deliberate replacement should be backed up and reviewed first; the import helper is not an update or merge tool.
 

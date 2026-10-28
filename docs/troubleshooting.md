@@ -33,11 +33,15 @@ Check:
 Get-ChildItem .\artifacts\logs\init-db-*.log | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 ```
 
-Rebuild the DB only when you are comfortable deleting local server DB state:
+Do not use forced initialization to repair an existing bot installation or enable new features. `init-db.ps1 -Force` / `init-db.sh --force` drop and recreate all CMaNGOS databases, including every account and character. Back up databases before any migration; missing bot tables require a verified targeted upstream installation, not a destructive reset. See [existing installations](playerbots.md#existing-installations).
 
-```powershell
-.\scripts\init-db.ps1 -Force
-```
+## Bots Missing or First Startup Taking Longer
+
+PlayerBots and AHBot are enabled by default. First startup initializes bot accounts and characters; follow the `mangosd` logs and allow extra time. Defaults target 20–30 random bots, levels 1–60, using 20 bot accounts.
+
+Bootstrap retains existing `.env` values. Check that `BUILD_PLAYERBOTS=ON`, `BUILD_AHBOT=ON`, `PLAYERBOTS_ENABLED=1`, and `AHBOT_ENABLED=1`; rebuild the image after changing build flags. Rebuilding does not add missing bot tables to an existing database. Follow the [existing-installation caveat](playerbots.md#existing-installations) before enabling bots there.
+
+To deliberately disable runtime bots, set `PLAYERBOTS_ENABLED=0` and `AHBOT_ENABLED=0`, then stop and start the world. Normally leave both build flags `ON`; this runtime change needs no rebuild.
 
 ## mangosd Exits Immediately
 
