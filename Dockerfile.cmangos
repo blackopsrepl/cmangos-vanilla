@@ -4,8 +4,8 @@ ARG CMANGOS_CORE_SHA
 ARG CLASSIC_DB_SHA
 ARG PLAYERBOTS_SHA
 ARG BUILD_JOBS=2
-ARG BUILD_PLAYERBOTS=OFF
-ARG BUILD_AHBOT=OFF
+ARG BUILD_PLAYERBOTS=ON
+ARG BUILD_AHBOT=ON
 ARG BUILD_SCRIPTDEV=ON
 ARG CMANGOS_BUILD_TYPE=MinSizeRel
 
@@ -47,8 +47,7 @@ RUN test -d /src/mangos-classic/src \
     && grep -q "upstream_sha=${PLAYERBOTS_SHA}" /opt/src/playerbots/.source-base \
     && if [ "$BUILD_PLAYERBOTS" = "ON" ]; then \
         mkdir -p /src/mangos-classic/src/modules/PlayerBots \
-        && cp -a /opt/src/playerbots/. /src/mangos-classic/src/modules/PlayerBots/ \
-        && sed -i "s/GIT_TAG \"master\"/GIT_TAG \"$PLAYERBOTS_SHA\"/" /src/mangos-classic/src/CMakeLists.txt; \
+        && cp -a /opt/src/playerbots/. /src/mangos-classic/src/modules/PlayerBots/; \
       fi \
     && sed -i 's/PLAYERBOTS_DB="YES"/PLAYERBOTS_DB="${PLAYERBOTS_DB:-NO}"/' /opt/src/classic-db/InstallFullDB.sh
 
@@ -56,6 +55,7 @@ RUN cmake -G Ninja -S /src/mangos-classic -B /build/cmangos \
       -DCMAKE_BUILD_TYPE="$CMANGOS_BUILD_TYPE" \
       -DCMAKE_INSTALL_PREFIX=/opt/cmangos \
       -DBUILD_PLAYERBOTS="$BUILD_PLAYERBOTS" \
+      -DFETCHCONTENT_SOURCE_DIR_PLAYERBOTS=/src/mangos-classic/src/modules/PlayerBots \
       -DBUILD_AHBOT="$BUILD_AHBOT" \
       -DBUILD_EXTRACTORS=ON \
       -DBUILD_SCRIPTDEV="$BUILD_SCRIPTDEV" \
@@ -82,8 +82,8 @@ RUN cmake --install /build/cmangos
 
 FROM debian:12-slim AS runtime
 
-ARG BUILD_PLAYERBOTS=OFF
-ARG BUILD_AHBOT=OFF
+ARG BUILD_PLAYERBOTS=ON
+ARG BUILD_AHBOT=ON
 ARG BUILD_SCRIPTDEV=ON
 
 ENV DEBIAN_FRONTEND=noninteractive \
