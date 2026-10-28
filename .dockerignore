@@ -1,0 +1,17 @@
+.git
+**/.git
+.env
+.server-import-*
+data/*
+!data/hermesproxy-linux
+!data/hermesproxy-linux/**
+db
+artifacts/logs
+**/*.log
+**/*.pid
+**/*.tmp
+.vs
+.vscode
+.idea
+README.md
+docs

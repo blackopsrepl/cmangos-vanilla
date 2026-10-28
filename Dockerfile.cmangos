@@ -1,0 +1,122 @@
+FROM debian:12-slim AS build
+
+ARG CMANGOS_CORE_SHA
+ARG CLASSIC_DB_SHA
+ARG PLAYERBOTS_SHA
+ARG BUILD_JOBS=2
+ARG BUILD_PLAYERBOTS=OFF
+ARG BUILD_AHBOT=OFF
+ARG BUILD_SCRIPTDEV=ON
+ARG CMANGOS_BUILD_TYPE=MinSizeRel
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        build-essential \
+        cmake \
+        default-libmysqlclient-dev \
+        git \
+        libace-dev \
+        libboost-filesystem-dev \
+        libboost-program-options-dev \
+        libboost-regex-dev \
+        libboost-serialization-dev \
+        libboost-thread-dev \
+        libbz2-dev \
+        libmariadb-dev \
+        libreadline-dev \
+        libssl-dev \
+        libtbb-dev \
+        libz-dev \
+        make \
+        ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY server/mangos-classic/ /src/mangos-classic/
+COPY server/classic-db/ /opt/src/classic-db/
+COPY server/playerbots/ /opt/src/playerbots/
+
+RUN test -d /src/mangos-classic/src \
+    && test -f /opt/src/classic-db/InstallFullDB.sh \
+    && test -d /opt/src/playerbots/playerbot \
+    && grep -q "upstream_sha=${CMANGOS_CORE_SHA}" /src/mangos-classic/.source-base \
+    && grep -q "upstream_sha=${CLASSIC_DB_SHA}" /opt/src/classic-db/.source-base \
+    && grep -q "upstream_sha=${PLAYERBOTS_SHA}" /opt/src/playerbots/.source-base \
+    && if [ "$BUILD_PLAYERBOTS" = "ON" ]; then \
+        mkdir -p /src/mangos-classic/src/modules/PlayerBots \
+        && cp -a /opt/src/playerbots/. /src/mangos-classic/src/modules/PlayerBots/ \
+        && sed -i "s/GIT_TAG \"master\"/GIT_TAG \"$PLAYERBOTS_SHA\"/" /src/mangos-classic/src/CMakeLists.txt; \
+      fi \
+    && sed -i 's/PLAYERBOTS_DB="YES"/PLAYERBOTS_DB="${PLAYERBOTS_DB:-NO}"/' /opt/src/classic-db/InstallFullDB.sh
+
+RUN cmake -G Ninja -S /src/mangos-classic -B /build/cmangos \
+      -DCMAKE_BUILD_TYPE="$CMANGOS_BUILD_TYPE" \
+      -DCMAKE_INSTALL_PREFIX=/opt/cmangos \
+      -DBUILD_PLAYERBOTS="$BUILD_PLAYERBOTS" \
+      -DBUILD_AHBOT="$BUILD_AHBOT" \
+      -DBUILD_EXTRACTORS=ON \
+      -DBUILD_SCRIPTDEV="$BUILD_SCRIPTDEV" \
+      -DCMAKE_CXX_FLAGS="-Wno-deprecated-enum-enum-conversion" \
+      -DPCH=OFF
+
+RUN if [ "$BUILD_PLAYERBOTS" = "ON" ]; then \
+      for source_file in \
+        /src/mangos-classic/src/modules/PlayerBots/playerbot/PlayerbotMgr.cpp \
+        /src/mangos-classic/src/modules/PlayerBots/playerbot/RandomPlayerbotMgr.cpp; do \
+        grep -q "#include <regex>" "$source_file" || sed -i '1i #include <regex>' "$source_file"; \
+      done; \
+      source_file=/src/mangos-classic/src/modules/PlayerBots/playerbot/strategy/tests/CommandDebug.cpp; \
+      grep -q '#include "playerbot/PlayerbotAI.h"' "$source_file" || sed -i '2i #include "playerbot/PlayerbotAI.h"' "$source_file"; \
+      source_file=/src/mangos-classic/src/modules/PlayerBots/playerbot/strategy/tests/TestContext.cpp; \
+      grep -q '#include "playerbot/RandomPlayerbotMgr.h"' "$source_file" || sed -i '3i #include "playerbot/RandomPlayerbotMgr.h"' "$source_file"; \
+      source_file=/src/mangos-classic/src/game/LFG/LFGQueue.h; \
+      grep -q '#include "Entities/Object.h"' "$source_file" || sed -i '/#include "Entities\/ObjectGuid.h"/a #include "Entities/Object.h"' "$source_file"; \
+    fi
+
+RUN cmake --build /build/cmangos --parallel "$BUILD_JOBS"
+
+RUN cmake --install /build/cmangos
+
+FROM debian:12-slim AS runtime
+
+ARG BUILD_PLAYERBOTS=OFF
+ARG BUILD_AHBOT=OFF
+ARG BUILD_SCRIPTDEV=ON
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    CMANGOS_BUILD_PLAYERBOTS=${BUILD_PLAYERBOTS} \
+    CMANGOS_BUILD_AHBOT=${BUILD_AHBOT} \
+    CMANGOS_BUILD_SCRIPTDEV=${BUILD_SCRIPTDEV}
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        gettext-base \
+        gzip \
+        libace-7.0.8 \
+        libbz2-1.0 \
+        libmariadb3 \
+        libreadline8 \
+        libssl3 \
+        libtbb12 \
+        libzstd1 \
+        mariadb-client \
+        netcat-openbsd \
+        zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /opt/cmangos /opt/cmangos
+COPY --from=build /src/mangos-classic /opt/src/mangos-classic
+COPY --from=build /opt/src/classic-db /opt/src/classic-db
+COPY config/*.template /opt/cmangos/templates/
+COPY docker/*.sh /opt/cmangos/docker/
+
+RUN chmod +x /opt/cmangos/docker/*.sh \
+    && mkdir -p /data /opt/cmangos/logs /opt/cmangos/etc
+
+WORKDIR /opt/cmangos
+ENTRYPOINT ["/opt/cmangos/docker/entrypoint.sh"]

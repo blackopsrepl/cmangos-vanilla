@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="ClientBuild" value="${HERMES_CLIENT_BUILD}" />
+    <add key="ClientSeed" value="${HERMES_CLIENT_SEED}" />
+    <add key="ServerBuild" value="${HERMES_LEGACY_BUILD}" />
+    <add key="ServerAddress" value="${HERMES_LEGACY_ADDRESS}" />
+    <add key="ServerPort" value="${LEGACY_AUTH_PORT}" />
+    <add key="ReportedOS" value="${HERMES_REPORTED_OS}" />
+    <add key="ReportedPlatform" value="${HERMES_REPORTED_PLATFORM}" />
+    <add key="ExternalAddress" value="${HERMES_EXTERNAL_ADDRESS}" />
+    <add key="RestPort" value="${HERMES_REST_PORT}" />
+    <add key="BNetPort" value="${HERMES_BNET_PORT}" />
+    <add key="RealmPort" value="${HERMES_REALM_PORT}" />
+    <add key="InstancePort" value="${HERMES_INSTANCE_PORT}" />
+    <add key="DebugOutput" value="${HERMES_DEBUG_OUTPUT}" />
+    <add key="PacketsLog" value="true" />
+    <add key="ServerSpellDelay" value="0" />
+    <add key="ClientSpellDelay" value="0" />
+    <add key="SpellQueueWindow" value="300" />
+  </appSettings>
+</configuration>

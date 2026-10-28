@@ -1,0 +1,15 @@
+services:
+  db-init:
+    volumes:
+      - ./data/extracted:/data
+      - ./artifacts/logs:/opt/cmangos/logs
+
+  tools:
+    volumes:
+      - ./data/extracted:/data
+      - ./artifacts/logs:/opt/cmangos/logs
+
+  mangosd:
+    volumes:
+      - ./data/extracted:/data:ro
+      - ./artifacts/logs:/opt/cmangos/logs

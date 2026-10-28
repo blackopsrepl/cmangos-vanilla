@@ -1,0 +1,35 @@
+{
+  "ClientOptions": {
+    "ClientBuild": "${HERMES_CLIENT_BUILD}",
+    "SeedHex": "${HERMES_CLIENT_SEED}",
+    "ReportedOS": "${HERMES_REPORTED_OS}",
+    "ReportedPlatform": "${HERMES_REPORTED_PLATFORM}"
+  },
+  "LegacyServerOptions": {
+    "Build": "${HERMES_LEGACY_BUILD}",
+    "Address": "${HERMES_LEGACY_ADDRESS}",
+    "Port": ${LEGACY_AUTH_PORT}
+  },
+  "ProxyNetworkOptions": {
+    "ExternalAddress": "${HERMES_EXTERNAL_ADDRESS}",
+    "RestPort": ${HERMES_REST_PORT},
+    "BNetPort": ${HERMES_BNET_PORT},
+    "RealmPort": ${HERMES_REALM_PORT},
+    "InstancePort": ${HERMES_INSTANCE_PORT}
+  },
+  "LoggingOptions": {
+    "MinimumLevel": "Information",
+    "ServerLevel": "Information",
+    "NetworkLevel": "Information",
+    "StorageLevel": "Information",
+    "PacketLevel": "Warning",
+    "ConsoleLevel": "Information",
+    "ToFile": true,
+    "Directory": "Logs"
+  },
+  "DiagnosticsOptions": {
+    "PacketsLog": true,
+    "EnableMetrics": false,
+    "EnableVersionCheck": false
+  }
+}

@@ -1,0 +1,142 @@
+name: ${PROJECT_NAME:-cmangos-classic}
+
+x-cmangos-build: &cmangos-build
+  context: .
+  dockerfile: Dockerfile.cmangos
+  args:
+    CMANGOS_CORE_SHA: de8f72993b9e1faa1bf92dd5505f3daec5cea3ce
+    CLASSIC_DB_SHA: 4d230bb1bd477948cac61c107d2718b3ea04a5b8
+    PLAYERBOTS_SHA: 31e0f32b543fee46941db51225bb7b432eace236
+    BUILD_JOBS: ${BUILD_JOBS:-2}
+    CMANGOS_BUILD_TYPE: ${CMANGOS_BUILD_TYPE:-MinSizeRel}
+    BUILD_PLAYERBOTS: ${BUILD_PLAYERBOTS:-OFF}
+    BUILD_AHBOT: ${BUILD_AHBOT:-OFF}
+    BUILD_SCRIPTDEV: ${BUILD_SCRIPTDEV:-ON}
+
+x-cmangos-env: &cmangos-env
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DB_HOST: db
+    DB_PORT: 3306
+    FORCE_DB_INIT: ${FORCE_DB_INIT:-0}
+
+services:
+  db:
+    image: mariadb:10.11
+    command: ["mariadbd", "--innodb-linux-aio=aio", "--binlog-expire-logs-seconds=0", "--expire-logs-days=0"]
+    user: mysql
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-cmangos-root-local}
+      MARIADB_AUTO_UPGRADE: "1"
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - cmangos-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  db-init:
+    profiles: ["init"]
+    image: cmangos-local:${CMANGOS_IMAGE_TAG:-locked}
+    build: *cmangos-build
+    <<: *cmangos-env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: init-db
+    volumes:
+      - cmangos-data:/data
+      - ./artifacts/logs:/opt/cmangos/logs
+
+  tools:
+    profiles: ["tools"]
+    image: cmangos-local:${CMANGOS_IMAGE_TAG:-locked}
+    build: *cmangos-build
+    <<: *cmangos-env
+    command: bash
+    volumes:
+      - cmangos-data:/data
+      - ./artifacts/logs:/opt/cmangos/logs
+
+  realmd:
+    image: cmangos-local:${CMANGOS_IMAGE_TAG:-locked}
+    build: *cmangos-build
+    <<: *cmangos-env
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command: realmd
+    ports:
+      - "${LEGACY_AUTH_PORT:-3724}:${LEGACY_AUTH_PORT:-3724}"
+    volumes:
+      - ./artifacts/logs:/opt/cmangos/logs
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 ${LEGACY_AUTH_PORT:-3724}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  hermesproxy:
+    image: hermesproxy-local:${CMANGOS_IMAGE_TAG:-locked}
+    build:
+      context: .
+      dockerfile: Dockerfile.hermesproxy
+      args:
+        CMANGOS_IMAGE_TAG: ${CMANGOS_IMAGE_TAG:-locked}
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
+    depends_on:
+      realmd:
+        condition: service_started
+    environment:
+      HERMES_BIND_ALL: "1"
+      HERMES_DEBUG_OUTPUT: "true"
+      HERMES_LEGACY_ADDRESS: ${HERMES_LEGACY_ADDRESS:-realmd}
+      HERMES_EXTERNAL_ADDRESS: ${HERMES_EXTERNAL_ADDRESS:-127.0.0.1}
+    ports:
+      - "${HERMES_BNET_PORT:-1119}:${HERMES_BNET_PORT:-1119}"
+      - "${HERMES_REST_PORT:-8081}:${HERMES_REST_PORT:-8081}"
+      - "${HERMES_REALM_PORT:-8084}:${HERMES_REALM_PORT:-8084}"
+      - "${HERMES_INSTANCE_PORT:-8086}:${HERMES_INSTANCE_PORT:-8086}"
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$(cat /proc/1/comm)\" = HermesProxy"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  mangosd:
+    image: cmangos-local:${CMANGOS_IMAGE_TAG:-locked}
+    build: *cmangos-build
+    <<: *cmangos-env
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    depends_on:
+      db:
+        condition: service_healthy
+      realmd:
+        condition: service_started
+    command: mangosd
+    ports:
+      - "${LEGACY_WORLD_PORT:-8085}:${LEGACY_WORLD_PORT:-8085}"
+    volumes:
+      - cmangos-data:/data:ro
+      - ./artifacts/logs:/opt/cmangos/logs
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 ${LEGACY_WORLD_PORT:-8085}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  cmangos-db:
+  cmangos-data:

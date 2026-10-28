@@ -1,0 +1,12 @@
+[RealmdConf]
+ConfVersion=2021031501
+LoginDatabaseInfo = "${DB_HOST};${DB_PORT};${MANGOS_DB_USER};${MANGOS_DB_PASSWORD};${MANGOS_DB_REALM}"
+LogsDir = "/opt/cmangos/logs"
+RealmServerPort = ${LEGACY_AUTH_PORT}
+BindIP = "0.0.0.0"
+PidFile = ""
+LogLevel = 0
+LogTime = 1
+LogFile = "realmd.log"
+LogTimestamp = 1
+StrictVersionCheck = 0

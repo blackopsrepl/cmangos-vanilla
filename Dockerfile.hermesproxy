@@ -1,0 +1,17 @@
+ARG CMANGOS_IMAGE_TAG=locked
+FROM cmangos-local:${CMANGOS_IMAGE_TAG}
+
+WORKDIR /opt/hermesproxy
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+COPY data/hermesproxy-linux/ /opt/hermesproxy/
+COPY config/hermesproxy.config.xml.template /opt/hermesproxy/HermesProxy.config.template
+COPY config/hermesproxy.appsettings.json.template /opt/hermesproxy/appsettings.json.template
+COPY docker/hermesproxy-entrypoint.sh /usr/local/bin/hermesproxy-entrypoint.sh
+
+RUN chmod +x /opt/hermesproxy/HermesProxy /usr/local/bin/hermesproxy-entrypoint.sh
+
+EXPOSE 1119 8081 8084 8086
+
+ENTRYPOINT ["/usr/local/bin/hermesproxy-entrypoint.sh"]
